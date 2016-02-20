@@ -4,6 +4,14 @@ Rogue AP killer
 
 ## Installation
 
+To install sentrygun using git, first clone the git repo as follows:
+
+	git clone https://github.com/s0lst1c3/sentrygun.git
+
+Then install dependencies using pip:
+
+	pip install -r pip.req
+
 ## Features
 
 ## Setup
