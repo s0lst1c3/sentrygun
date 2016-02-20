@@ -2,6 +2,10 @@
 
 Rogue AP killer
 
+## Features
+
+Provides wireless networks with advanced protection against evil twin and karma attacks. Capable of both detecting and neutralizing threats while alerting network admins so they can react.
+
 ## Installation
 
 To install sentrygun using git, first clone the git repo as follows:
@@ -11,8 +15,6 @@ To install sentrygun using git, first clone the git repo as follows:
 Then install dependencies using pip:
 
 	pip install -r pip.req
-
-## Features
 
 ## Setup
 
