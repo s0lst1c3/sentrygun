@@ -43,7 +43,7 @@ Sentrygun takes four command line arguments:
 - __--whitelist__ (required) - This flag should be set to the path of your whitelist file.
 - __--evil-twin__ (optional) - Use this flag to have sentrygun protect against evil-twins
 - __--karma__ (optional) - Use this flag to have sentrygun protect against karma attacks
-- __--pacifist (option)__ - Tell sentrygun ___not___ to retaliate against rogue AP attacks.
+- __--pacifist__ (optional) - Tell sentrygun ___not___ to retaliate against rogue AP attacks.
 
 
 To protect your wireless network against evil-twin attacks, use the following command:
