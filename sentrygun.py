@@ -110,7 +110,7 @@ def detect_evil_twins():
 
     try:
         whitelist = {}
-        with open('whitelist.txt') as fd:
+        with open(whitelist_file) as fd:
 
             for line in fd:
 
@@ -238,6 +238,12 @@ def set_configs():
                     action='store_true',
                     help='detect karma attacks')
 
+    parser.add_argument('--whitelist',
+                    dest='whitelist',
+                    type=str,
+                    required=True,
+                    help='Specify whitelist file.')
+
     return parser.parse_args().__dict__
 
 if __name__ == '__main__':
@@ -261,6 +267,8 @@ if __name__ == '__main__':
     '''
 
     configs = set_configs()
+
+    whitelist_file = configs['whitelist']
     interface = configs['iface']
 
     daemons = []

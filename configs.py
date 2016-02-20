@@ -3,8 +3,11 @@ BURST_COUNT = 10
 THREAT_MITIGATION_ENABLED = True
 ALERTS_ENABLED = True
 
-# alert settings --------------------------------------------------------------
-ALERT_RECIPIENTS = []
+# SMTP settings  --------------------------------------------------------------
+ALERT_RECIPIENTS = [
+    'samantha@example.com',
+    'jake@example.com',
+]
 
 SMTP_SERVER = ''
 SMTP_PORT = 587
