@@ -139,33 +139,32 @@ def detect_evil_twins():
                     print '[Evil Twin Sentry] %s has ssid: %s but not in whitelist' % (bssid, ssid)
                     shitlist.put(response)
                 else:
-                    pass
 
-                    #baseline_tx = numpy.mean(recent_tx_values)
-                    #
-                    #range_a = baseline_tx - THRESHOLD
-                    #range_b = baseline_tx + THRESHOLD
+                    baseline_tx = numpy.mean(recent_tx_values)
+                    
+                    range_a = baseline_tx - THRESHOLD
+                    range_b = baseline_tx + THRESHOLD
 
-                    #if range_a > range_b:
+                    if range_a > range_b:
 
-                    #    high_lim = range_a
-                    #    low_lim = range_b
+                        high_lim = range_a
+                        low_lim = range_b
             
-                    #else:
+                    else:
 
-                    #    high_lim = range_b
-                    #    low_lim = range_a
+                        high_lim = range_b
+                        low_lim = range_a
 
-                    #tx = response['tx']
+                    tx = response['tx']
 
-                    #if tx > high_lim or tx < low_lim:
+                    if tx > high_lim or tx < low_lim:
 
-                    #    print '[Evil Twin Sentry] Illegal tx varation: %s ' % bssid
-                    #    shitlist.put(bssid)
+                        print '[Evil Twin Sentry] Illegal tx varation: %s ' % bssid
+                        shitlist.put(bssid)
 
-                    #else:
+                    else:
 
-                    #    baseline_tx.appendleft(tx)
+                        baseline_tx.appendleft(tx)
 
     except KeyboardInterrupt:
         pass

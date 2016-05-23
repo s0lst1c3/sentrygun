@@ -98,7 +98,7 @@ def send_probe_requests(interface=None, ssid=None):
     time.sleep(3)
 
     # send out probe requests... sniffer will catch any responses
-    ProbeReq(ssid=ssid, interface='wlp3s0')
+    ProbeReq(ssid=ssid, interface=interface)
 
     # make sure to get results from shared memory before allowing 
     # sniffer to join with parent process 
