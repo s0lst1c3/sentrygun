@@ -5,49 +5,57 @@
 # v0.0.1
 
 import random
+import requests
 import string
 import time
 import json
-import smtplib
+import mmh3
 
-from email.mime.text import MIMEText
-from email.utils import make_msgid
 from multiprocessing import Queue, Process
 from collections import deque
 from configs import *
 from argparse import ArgumentParser
+from socketIO_client import SocketIO, BaseNamespace
 
 ESSID_LEN  = 24
+DEVICE_NAME = 'HARBINGER'
+SERVER_ENDPOINT = 'alert/add'
 
 shitlist = Queue()
+deauth_list = Queue()
+napalm_list = Queue()
 
-ALERT_RECIPIENTS = []
-with open(RECIPIENTS_FILE) as fd:
-    for line in fd:
-        ALERT_RECIPIENTS.append(line.strip())
+def alert_factory(location=None,
+                bssid=None,
+                channel=None,
+                essid=None,
+                intent=None):
+
+    # all arguments are required
+    assert not any([
+                location is None,
+                bssid is None,
+                channel is None,
+                essid is None,
+                intent is None,
+            ])
+
+    # return dict from arguments
+    _id = str(mmh3.hash(''.join([ essid, location, bssid, str(channel), intent])))
+
+    return {
+        
+        'id' : _id,
+        'location' : location,
+        'bssid' : bssid,
+        'channel' : channel,
+        'essid' : essid,
+        'intent' : intent,
+        'timestamp' : time.time(),
+    }
 
 def rand_essid():
     return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in xrange(ESSID_LEN))
-
-def send_alert(body, subject=DEFAULT_SUBJECT, debug_level=True):
-    
-    server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT) #port 465 or 587
-    server.set_debuglevel(debug_level)
-    server.ehlo()
-    server.starttls()
-    server.ehlo()
-    server.login(SMTP_USER, SMTP_PASS)
-    
-    for to_addr in ALERT_RECIPIENTS:
-    
-        msg = MIMEText(body, 'html', 'utf-8')
-        msg['Subject'] = subject
-        msg['From'] = SMTP_USER
-        msg['To'] = to_addr
-        msg['Message-ID'] = make_msgid()
-        server.sendmail(SMTP_USER,[to_addr],msg.as_string())
-    
-    server.close()
 
 def deauth(bssid, client='ff:ff:ff:ff:ff:ff'):
 
@@ -59,45 +67,49 @@ def deauth(bssid, client='ff:ff:ff:ff:ff:ff'):
                 print '[Sentrygun] Deauthing ', bssid
             send(pckt)
 
-def mitigator():
-    
+class PunisherNamespace(BaseNamespace):
+
+    def on_napalm_target(self, *args):
+        
+        # alert = args... here
+        
+        napalm_list.put(alert)
+
+        print 'Napalming target'
+
+    def on_deauth_target(self, *args):
+
+        deauth_list.put(alert)
+
+        print 'Deauthing target'
+
+
+def punisher(configs):
+
+    print 'punisher activated'
+    socket = SocketIO(configs['server_addr'], configs['server_port'])
+    punisher_ns = socket.define(PunisherNamespace, '/punisher')
+
+    socket.wait()
+
+def listener(configs):
+
+    server_uri = 'http://%s:%d/%s' %\
+        (configs['server_addr'], configs['server_port'], SERVER_ENDPOINT)
+
     try:
 
-        deauth_treatments = []
-        
-        deauthed_bssids = set([])
         while True:
 
-            response = shitlist.get()
-            bssid = response['addr3']
+            alert = shitlist.get()
 
-            if bssid in deauthed_bssids:
-                continue
+            print 'sending alert'
 
-            print '[banhammer] Recieved new target:', bssid
-
-            if THREAT_MITIGATION_ENABLED:
-
-                print '[banhammer] Launching persistent deauth on:', bssid
-                deauthed_bssids.add(bssid)
-
-                p = Process(target=deauth, args=(bssid,))
-                p.daemon = True
-                p.start()
-                deauth_treatments.append(p)
-
-            if ALERTS_ENABLED:
-
-                body = 'Karma attack detected from %s' % bssid
-                send_alert(body, 'New IDS Alert')
+            response = requests.post(server_uri, json=alert)
 
     except KeyboardInterrupt:
         pass
 
-    for d in deauth_treatments:
-    
-        d.terminate()
-        d.join()
 
 def get_responding_aps(probe_responses):
 
@@ -142,34 +154,47 @@ def detect_evil_twins():
 
                 if bssid not in whitelist[ssid]:
                     print '[Evil Twin Sentry] %s has ssid: %s but not in whitelist' % (bssid, ssid)
-                    shitlist.put(response)
+
+                    alert = alert_factory(location=DEVICE_NAME,
+                                        bssid=bssid,
+                                        channel=response['channel'],
+                                        intent='evil twin - whitelist',
+                                        essid=ssid)
+                    shitlist.put(alert)
+
                 else:
 
-                    baseline_tx = numpy.mean(recent_tx_values)
-                    
-                    range_a = baseline_tx - THRESHOLD
-                    range_b = baseline_tx + THRESHOLD
+                    pass
+                    #baseline_tx = numpy.mean(recent_tx_values)
+                    #
+                    #range_a = baseline_tx - THRESHOLD
+                    #range_b = baseline_tx + THRESHOLD
 
-                    if range_a > range_b:
+                    #if range_a > range_b:
 
-                        high_lim = range_a
-                        low_lim = range_b
+                    #    high_lim = range_a
+                    #    low_lim = range_b
             
-                    else:
+                    #else:
 
-                        high_lim = range_b
-                        low_lim = range_a
+                    #    high_lim = range_b
+                    #    low_lim = range_a
 
-                    tx = response['tx']
+                    #tx = response['tx']
 
-                    if tx > high_lim or tx < low_lim:
+                    #if tx > high_lim or tx < low_lim:
 
-                        print '[Evil Twin Sentry] Illegal tx varation: %s ' % bssid
-                        shitlist.put(bssid)
+                    #    print '[Evil Twin Sentry] Illegal tx varation: %s ' % bssid
+                    #    alert = alert_factory(location=DEVICE_NAME,
+                    #                        bssid=bssid,
+                    #                        channel=channel,
+                    #                        intent='evil twin - tx',
+                    #                        essid=ssid)
+                    #    shitlist.put(alert)
 
-                    else:
+                    #else:
 
-                        baseline_tx.appendleft(tx)
+                    #    baseline_tx.appendleft(tx)
 
     except KeyboardInterrupt:
         pass
@@ -214,8 +239,16 @@ def detect_karma_attacks():
                 if responding_aps['counts'][bssid] >= THRESHOLD:
 
                     print '[Karma Sentry] Karma attack detected from %s' % bssid
-                    print '[Karma Sentry] Adding %s to shitlist' % bssid
-                    shitlist.put(responding_aps['details'][bssid])
+                    print '[Karma Sentry] Adding %s to list of offending APs' % bssid
+    
+                    details = responding_aps['details'][bssid]
+                    
+                    alert = alert_factory(location=DEVICE_NAME,
+                                        bssid=bssid,
+                                        channel=details['channel'],
+                                        intent='karma',
+                                        essid=details['essid'])
+                    shitlist.put(alert)
 
             time.sleep(3)
 
@@ -232,6 +265,19 @@ def set_configs():
                     type=str,
                     help='Specify network interface to use')
 
+    parser.add_argument('-a',
+                    dest='server_addr',
+                    required=True,
+                    type=str,
+                    help='Send data to server at this address')
+
+    parser.add_argument('-p',
+                    dest='server_port',
+                    required=False,
+                    default=80,
+                    type=int,
+                    help='Send data to server listening on this port')
+
     parser.add_argument('--evil-twin',
                     dest='evil_twin',
                     action='store_true',
@@ -241,6 +287,7 @@ def set_configs():
                     dest='karma',
                     action='store_true',
                     help='detect karma attacks')
+
 
     return parser.parse_args().__dict__
 
@@ -258,9 +305,8 @@ if __name__ == '__main__':
 \_______)(_______/|/    )_)   )_(   |/   \__/   \_/   (_______)(_______)|/    )_)
 
 
-                            Written by Gabriel "solstice" Ryan
-
-                            gabriel@solstice.me
+                            Gabriel Ryan
+                            gryan@gdssecurity.com
                                                                                  
     '''
 
@@ -275,7 +321,8 @@ if __name__ == '__main__':
         if configs['evil_twin']:
             daemons.append(Process(target=detect_evil_twins, args=()))
 
-        daemons.append(Process(target=mitigator, args=()))
+        daemons.append(Process(target=listener, args=(configs,)))
+        daemons.append(Process(target=punisher, args=(configs,)))
 
         for d in daemons:
 
