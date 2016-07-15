@@ -4,7 +4,7 @@ THREAT_MITIGATION_ENABLED = True
 ALERTS_ENABLED = True
 
 # alert settings --------------------------------------------------------------
-ALERT_RECIPIENTS = []
+RECIPIENTS_FILE = 'alert_recipients.txt'
 
 SMTP_SERVER = ''
 SMTP_PORT = 587
