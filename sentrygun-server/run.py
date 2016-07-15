@@ -1,10 +1,9 @@
+import time
 import json
+import os
 
 from argparse import ArgumentParser
 from smashd import smashd, socketio
-
-HOST = 'localhost'
-PORT = 80
 
 def set_configs():
 
@@ -36,9 +35,17 @@ def set_configs():
 def display_banner():
 
     print '''
+                      __                                     
+  ______ ____   _____/  |________ ___.__. ____  __ __  ____  
+ /  ___// __ \\ /    \\   __\\_  __ <   |  |/ ___\\|  |  \\/    \\ 
+ \\___ \\\\  ___/|   |  \  |  |  | \\/\\___  / /_/  >  |  /   |  \\
+/____  >\\___  >___|  /__|  |__|   / ____\\___  /|____/|___|  /
+     \\/     \\/     \\/             \\/   /_____/            \\/ 
 
-        banner text here
 
+                    version 1.0.0
+                    Gabriel Ryan <gryan@gdssecurity.com>
+                    Gotham Digital Science
     '''
 
     print 'Starting on %s:%d . . .' % (smashd.config.host, smashd.config.port)
@@ -49,11 +56,33 @@ def main():
     set_configs()
 
     display_banner()
+
+    print '[*] Starting redis-server daemon...'
+    ''' i'm sorry '''
+    os.system('redis-server 2>&1 1>/dev/null ./redis.conf &')
+
+    time.sleep(2)
+
+    print '[*] Starting SentryGun server...'
     
-    socketio.run(smashd,
-                host=smashd.config.host,
-                port=smashd.config.port,
-                debug=smashd.config.debug)
+    try:
+    
+        print '[*] SentryGun server is running ...'
+    
+        socketio.run(smashd,
+                    host=smashd.config.host,
+                    port=smashd.config.port,
+                    debug=smashd.config.debug)
+
+    except KeyboardInterrupt:
+
+        print '[*] Gracefully shutting down redis-server'
+
+        # yep, "gracefully"
+        os.system('for i in `pgrep redis-server`; do kill $i; done')
+        os.system('rm -f dump.rdb')
+
+    print '[*] Goodbye!'
 
 if __name__ == '__main__':
     main()

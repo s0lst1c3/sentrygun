@@ -118,13 +118,11 @@ def add_alert(alert):
 def launch_napalm(alerts):
 
     #emit('aaa_response', namespace=listener_ns, broadcast=True)
-    print 'test'
     emit('napalm_target', namespace=listener_ns, broadcast=True)
 
 def launch_deauth(alerts):
 
     #emit('aaa_response', namespace=listener_ns, broadcast=True)
-    print 'test'
     emit('deauth_target', namespace=listener_ns, broadcast=True)
 
 # SOCKETIO EVENTS -------------------------------------------------------------
@@ -184,22 +182,18 @@ def redis_monitor():
     r = redis.StrictRedis()
     pubsub = r.pubsub()
     pubsub.psubscribe('*')
-    print 'test'
     for msg in pubsub.listen():
 
-        print msg
         if 'expired' in msg['channel']:
 
             msg = msg['data'].split(':')
         
             alert = [{ 'id' : msg[0], 'location' : msg[1] }]
     
-            response = requests.post('http://localhost:80/alert/dismiss', json=alert)
+            response = requests.post('http://172.16.15.130:80/alert/dismiss', json=alert)
 
             print 'Sent to self:', response
     
-            
-
 rmon = Process(target=redis_monitor, args=())
 rmon.start()
 

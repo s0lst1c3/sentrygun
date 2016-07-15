@@ -73,13 +73,13 @@ class PunisherNamespace(BaseNamespace):
         
         # alert = args... here
         
-        napalm_list.put(alert)
+        napalm_list.put(args)
 
         print 'Napalming target'
 
     def on_deauth_target(self, *args):
 
-        deauth_list.put(alert)
+        deauth_list.put(args)
 
         print 'Deauthing target'
 
