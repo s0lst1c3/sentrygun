@@ -21,6 +21,11 @@ ESSID_LEN  = 24
 
 shitlist = Queue()
 
+ALERT_RECIPIENTS = []
+with open(RECIPIENTS_FILE) as fd:
+    for line in fd:
+        ALERT_RECIPIENTS.append(line.strip())
+
 def rand_essid():
     return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in xrange(ESSID_LEN))
 
