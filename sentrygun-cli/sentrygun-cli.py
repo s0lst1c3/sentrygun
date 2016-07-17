@@ -82,13 +82,23 @@ def rand_essid():
 
 def deauth(bssid, client='ff:ff:ff:ff:ff:ff'):
 
-    pckt = Dot11(addr1=client, addr2=bssid, addr3=bssid) / Dot11Deauth()
-    while True:
 
-        for i in range(64):
-            if i == 0:
-                print '[Sentrygun] Deauthing ', bssid
-            send(pckt)
+    print '[Debug] Running deauth attack against', bssid
+
+    #pckt = Dot11(addr1=client, addr2=bssid, addr3=bssid) / Dot11Deauth()
+    #while True:
+
+    #    for i in range(64):
+    #        if i == 0:
+    #            print '[Sentrygun] Deauthing ', bssid
+    #        send(pckt)
+
+def napalm(bssid, client='ff:ff:ff:ff:ff:ff'):
+
+
+    print '[Debug] Running napalm attack against', bssid
+
+    # code to connect 100k clients goes here
 
 class PunisherNamespace(BaseNamespace):
 
@@ -412,6 +422,8 @@ if __name__ == '__main__':
 
         daemons.append(Process(target=listener, args=(configs,)))
         daemons.append(Process(target=punisher, args=(configs,)))
+        daemons.append(Process(target=deauth_scheduler, args=()))
+        daemons.append(Process(target=napalm_scheduler, args=()))
 
         for d in daemons:
 
