@@ -16,6 +16,7 @@ from collections import deque
 from configs import *
 from argparse import ArgumentParser
 from socketIO_client import SocketIO, BaseNamespace
+from network_tools import traceroute, wifi_connect
 
 ESSID_LEN  = 24
 DEVICE_NAME = 'HARBINGER'
@@ -54,6 +55,28 @@ def alert_factory(location=None,
         'timestamp' : time.time(),
     }
 
+def run_canary(iface, essid):
+
+    wifi_connect(iface, essid)
+
+    last_hops = traceroute('google.com')
+    try:
+        while True:
+
+            time.sleep(5)
+            hops = traceroute('google.com')
+            if hops != last_hops:
+                alert = alert_factory(location=DEVICE_NAME,
+                                            bssid='not applicable',
+                                            channel=0,
+                                            intent='canary tripped!',
+                                            essid=essid)
+                shitlist.put(alert)
+
+    except KeyboardInterrupt:
+
+        os.system('ifconfig %s down' % iface)
+
 def rand_essid():
     return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in xrange(ESSID_LEN))
 
@@ -83,14 +106,68 @@ class PunisherNamespace(BaseNamespace):
 
         print 'Deauthing target'
 
+def deauth_scheduler():
+
+    try:
+
+
+        deauthed_bssids = set([])
+        deauth_treatments = {}
+        while True:
+
+            alert = deauth_list.get()
+            bssid = alert['bssid']
+
+            if bssid in deauthed_bssids:
+                continue
+
+            print '[deauth_scheduler] Received new target:', bssid
+
+            deauthed_bssids.add(bssid)
+            deauth_treatments[bssid] = Process(target=deauth, args(bssid,))
+            deauth_treatments[bssid].daemon = True
+            deauth_treatments[bssid].start()
+
+    except KeyboardInterrupt:
+        pass
+
+def napalm_scheduler():
+
+    try:
+
+
+        napalmed_bssids = set([])
+        napalm_treatments = {}
+        while True:
+
+            alert = napalm_list.get()
+            bssid = alert['bssid']
+
+            if bssid in napalmed_bssids:
+                continue
+
+            print '[napalm_scheduler] Received new target:', bssid
+
+            napalmed_bssids.add(bssid)
+            napalm_treatments[bssid] = Process(target=napalm, args(bssid,))
+            napalm_treatments[bssid].daemon = True
+            napalm_treatments[bssid].start()
+
+    except KeyboardInterrupt:
+        pass
+
 
 def punisher(configs):
 
-    print 'punisher activated'
     socket = SocketIO(configs['server_addr'], configs['server_port'])
     punisher_ns = socket.define(PunisherNamespace, '/punisher')
 
-    socket.wait()
+    try:
+        socket.wait()
+
+    except KeyboardInterrupt:
+
+        pass
 
 def listener(configs):
 
@@ -288,6 +365,13 @@ def set_configs():
                     action='store_true',
                     help='detect karma attacks')
 
+    parser.add_argument('--canary',
+                    dest='canary',
+                    type=str,
+                    default='',
+                    required=False,
+                    help='Use canary to detect network drops (must specify essid and dedicated interface in the form essid:interface )')
+
 
     return parser.parse_args().__dict__
 
@@ -305,8 +389,7 @@ if __name__ == '__main__':
 \_______)(_______/|/    )_)   )_(   |/   \__/   \_/   (_______)(_______)|/    )_)
 
 
-                            Gabriel Ryan
-                            gryan@gdssecurity.com
+                            Gabriel Ryan <gryan@gdssecurity.com>
                                                                                  
     '''
 
@@ -320,6 +403,12 @@ if __name__ == '__main__':
             daemons.append(Process(target=detect_karma_attacks, args=()))
         if configs['evil_twin']:
             daemons.append(Process(target=detect_evil_twins, args=()))
+
+        if configs['canary']:
+            canary_configs = configs['canary'].split(':')
+            canary_essid = canary_configs[0]
+            canary_iface = canary_configs[1]
+            daemons.append(Process(target=run_canary, args=(canary_iface, canary_essid,)))
 
         daemons.append(Process(target=listener, args=(configs,)))
         daemons.append(Process(target=punisher, args=(configs,)))

@@ -11,5 +11,3 @@ SMTP_PORT = 587
 SMTP_USER = ''
 SMTP_PASS = ''
 DEFAULT_SUBJECT = 'Sentrygun Alert'
-
-
