@@ -18,10 +18,6 @@ from argparse import ArgumentParser
 from socketIO_client import SocketIO, BaseNamespace
 from network_tools import traceroute, wifi_connect
 
-ESSID_LEN  = 24
-DEVICE_NAME = 'HARBINGER'
-SERVER_ENDPOINT = 'alert/add'
-
 shitlist = Queue()
 deauth_list = Queue()
 napalm_list = Queue()
