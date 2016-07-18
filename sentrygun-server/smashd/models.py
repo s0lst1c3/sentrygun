@@ -38,7 +38,9 @@ def remove_alerts(alerts):
     
     global current_alerts
 
-    print 'removing from', json.dumps(current_alerts, indent=4, sort_keys=True)
     for a in alerts:
 
-        del current_alerts[a['id']]
+        if a['id'] in current_alerts:
+            print 'removing from', json.dumps(current_alerts, indent=4, sort_keys=True)
+
+            del current_alerts[a['id']]
