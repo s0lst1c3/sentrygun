@@ -83,7 +83,9 @@ def rand_essid():
 def deauth(bssid, client='ff:ff:ff:ff:ff:ff'):
 
 
-    print '[Debug] Running deauth attack against', bssid
+    while True:
+        print '[Debug] Running deauth attack against', bssid
+        time.sleep(1)
 
     #pckt = Dot11(addr1=client, addr2=bssid, addr3=bssid) / Dot11Deauth()
     #while True:
@@ -96,7 +98,9 @@ def deauth(bssid, client='ff:ff:ff:ff:ff:ff'):
 def napalm(bssid, client='ff:ff:ff:ff:ff:ff'):
 
 
-    print '[Debug] Running napalm attack against', bssid
+    while True:
+        print '[Debug] Running napalm attack against', bssid
+        time.sleep(1)
 
     # code to connect 100k clients goes here
 
@@ -104,39 +108,87 @@ class PunisherNamespace(BaseNamespace):
 
     def on_napalm_target(self, *args):
         
-        # alert = args... here
+        alert = args[0]
         
-        napalm_list.put(args)
+        napalm_list.put(alert)
 
-        print 'Napalming target'
+        if 'dismiss' in alert:
+
+            print 'Ceasing napalm attack against', json.dumps(alert, indent=4, sort_keys=True)
+    
+        else:
+
+            print 'Initiating napalm attack against', json.dumps(alert, indent=4, sort_keys=True)
 
     def on_deauth_target(self, *args):
 
-        deauth_list.put(args)
+        alert = args[0]
+        
+        deauth_list.put(alert)
 
-        print 'Deauthing target'
+        if 'dismiss' in alert:
+
+            print 'Ceasing deauth attack against', json.dumps(alert, indent=4, sort_keys=True)
+    
+        else:
+
+            print 'Initiating deauth attack against', json.dumps(alert, indent=4, sort_keys=True)
+
+#def deauth_scheduler():
+#
+#    try:
+#
+#
+#        deauthed_bssids = set([])
+#        deauth_treatments = {}
+#        while True:
+#
+#            alert = deauth_list.get()
+#            bssid = alert['bssid']
+#
+#            if bssid in deauthed_bssids:
+#                continue
+#
+#            print '[deauth_scheduler] Received new target:', bssid
+#
+#            deauthed_bssids.add(bssid)
+#            deauth_treatments[bssid] = Process(target=deauth, args=(bssid,))
+#            deauth_treatments[bssid].daemon = True
+#            deauth_treatments[bssid].start()
+#
+#    except KeyboardInterrupt:
+#        pass
 
 def deauth_scheduler():
 
     try:
 
 
-        deauthed_bssids = set([])
         deauth_treatments = {}
         while True:
 
             alert = deauth_list.get()
-            bssid = alert['bssid']
+            _id = alert['id']
+            print 'alert is', alert
 
-            if bssid in deauthed_bssids:
+            if 'dismiss' in alert:
+
+                if _id not in deauth_treatments:
+                    continue
+                deauth_treatments[_id].terminate()
+                del deauth_treatments[_id]
+
+            elif _id in deauth_treatments:
                 continue
 
-            print '[deauth_scheduler] Received new target:', bssid
+            else:
+                bssid = alert['bssid']
 
-            deauthed_bssids.add(bssid)
-            deauth_treatments[bssid] = Process(target=deauth, args(bssid,))
-            deauth_treatments[bssid].daemon = True
-            deauth_treatments[bssid].start()
+                print '[deauth_scheduler] Received new target:', bssid
+
+                deauth_treatments[_id] = Process(target=deauth, args=(bssid,))
+                deauth_treatments[_id].daemon = True
+                deauth_treatments[_id].start()
 
     except KeyboardInterrupt:
         pass
@@ -146,22 +198,31 @@ def napalm_scheduler():
     try:
 
 
-        napalmed_bssids = set([])
         napalm_treatments = {}
         while True:
 
             alert = napalm_list.get()
-            bssid = alert['bssid']
+            _id = alert['id']
+            print 'alert is', alert
 
-            if bssid in napalmed_bssids:
+            if 'dismiss' in alert:
+
+                if _id not in napalm_treatments:
+                    continue
+                napalm_treatments[_id].terminate()
+                del napalm_treatments[_id]
+
+            elif _id in napalm_treatments:
                 continue
 
-            print '[napalm_scheduler] Received new target:', bssid
+            else:
+                bssid = alert['bssid']
 
-            napalmed_bssids.add(bssid)
-            napalm_treatments[bssid] = Process(target=napalm, args(bssid,))
-            napalm_treatments[bssid].daemon = True
-            napalm_treatments[bssid].start()
+                print '[napalm_scheduler] Received new target:', bssid
+
+                napalm_treatments[_id] = Process(target=napalm, args=(bssid,))
+                napalm_treatments[_id].daemon = True
+                napalm_treatments[_id].start()
 
     except KeyboardInterrupt:
         pass

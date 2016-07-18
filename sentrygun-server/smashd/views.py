@@ -101,13 +101,20 @@ def dismiss_alerts(alerts):
     print 'dismissing'
     emit('dismiss alerts', alerts, namespace=socketio_ns, broadcast=True)
 
+    # stop all current attacks
+    for a in alerts:
+
+        a['dismiss'] = True
+        launch_napalm(a)
+        launch_deauth(a)
+
 def add_alert(alert):
     
     r = redis.Redis()
 
     r.set('%s:%s' % (alert['id'], alert['location']), alert['location'])
     #r.expire(alert['id'], 30)
-    r.expire('%s:%s' % (alert['id'], alert['location']), 5)
+    r.expire('%s:%s' % (alert['id'], alert['location']), 30)
     #r.expire(alert['id'], 5)
 
     # store alert in time based cache
@@ -118,12 +125,12 @@ def add_alert(alert):
 def launch_napalm(alerts):
 
     #emit('aaa_response', namespace=listener_ns, broadcast=True)
-    emit('napalm_target', namespace=listener_ns, broadcast=True)
+    emit('napalm_target', alerts, namespace=listener_ns, broadcast=True)
 
 def launch_deauth(alerts):
 
     #emit('aaa_response', namespace=listener_ns, broadcast=True)
-    emit('deauth_target', namespace=listener_ns, broadcast=True)
+    emit('deauth_target', alerts, namespace=listener_ns, broadcast=True)
 
 # SOCKETIO EVENTS -------------------------------------------------------------
 
