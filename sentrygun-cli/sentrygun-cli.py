@@ -10,6 +10,7 @@ import string
 import time
 import json
 import mmh3
+import os
 
 from multiprocessing import Queue, Process
 from collections import deque
@@ -26,6 +27,7 @@ def alert_factory(location=None,
                 bssid=None,
                 channel=None,
                 essid=None,
+                tx=None,
                 intent=None):
 
     # all arguments are required
@@ -34,11 +36,12 @@ def alert_factory(location=None,
                 bssid is None,
                 channel is None,
                 essid is None,
+                tx is None,
                 intent is None,
             ])
 
     # return dict from arguments
-    _id = str(mmh3.hash(''.join([ essid, location, bssid, str(channel), intent])))
+    _id = str(mmh3.hash(''.join([ essid, bssid, str(channel), intent])))
 
     return {
         
@@ -46,6 +49,7 @@ def alert_factory(location=None,
         'location' : location,
         'bssid' : bssid,
         'channel' : channel,
+	'tx' : tx,
         'essid' : essid,
         'intent' : intent,
         'timestamp' : time.time(),
@@ -110,7 +114,7 @@ class PunisherNamespace(BaseNamespace):
 
         if 'dismiss' in alert:
 
-            print 'Ceasing napalm attack against', json.dumps(alert, indent=4, sort_keys=True)
+            print 'Ceasing any existing napalm attacks against', json.dumps(alert, indent=4, sort_keys=True)
     
         else:
 
@@ -124,7 +128,7 @@ class PunisherNamespace(BaseNamespace):
 
         if 'dismiss' in alert:
 
-            print 'Ceasing deauth attack against', json.dumps(alert, indent=4, sort_keys=True)
+            print 'Ceasing any existing deauth attack against', json.dumps(alert, indent=4, sort_keys=True)
     
         else:
 
@@ -269,6 +273,7 @@ def detect_evil_twins():
 
     import sniffer
 
+    print 'test'
     try:
         whitelist = {}
         with open('whitelist.txt') as fd:
@@ -285,6 +290,8 @@ def detect_evil_twins():
                     whitelist[ssid] = set()
                     whitelist[ssid].add(bssid)
 
+        print 'test 2'
+
         probe_responses = sniffer.response_sniffer(interface)
 
         recent_tx_values = deque([], 10)
@@ -293,6 +300,10 @@ def detect_evil_twins():
         
             ssid = response['essid']
             bssid = response['addr3']
+            #print ssid, bssid, response['tx']
+            if 'Bat' in ssid:
+                print ssid
+            
 
             if ssid in whitelist:
 
@@ -303,6 +314,7 @@ def detect_evil_twins():
                                         bssid=bssid,
                                         channel=response['channel'],
                                         intent='evil twin - whitelist',
+					tx=response['tx'],
                                         essid=ssid)
                     shitlist.put(alert)
 
@@ -390,6 +402,7 @@ def detect_karma_attacks():
                     alert = alert_factory(location=DEVICE_NAME,
                                         bssid=bssid,
                                         channel=details['channel'],
+					tx=details['tx'],
                                         intent='karma',
                                         essid=details['essid'])
                     shitlist.put(alert)
@@ -442,6 +455,18 @@ def set_configs():
 
     return parser.parse_args().__dict__
 
+def channel_hopper():
+
+    while True:
+
+        # channel hop from main process
+        for channel in xrange(1, 14):
+
+            print '[channel hopper] Switching to channel', channel
+            os.system('iwconfig %s channel %d' % (configs['iface'], channel))
+            time.sleep(.5)
+
+
 if __name__ == '__main__':
 
     print '''
@@ -481,9 +506,9 @@ if __name__ == '__main__':
         daemons.append(Process(target=punisher, args=(configs,)))
         daemons.append(Process(target=deauth_scheduler, args=()))
         daemons.append(Process(target=napalm_scheduler, args=()))
+        daemons.append(Process(target=channel_hopper, args=()))
 
         for d in daemons:
-
             d.start()
 
     except KeyboardInterrupt:

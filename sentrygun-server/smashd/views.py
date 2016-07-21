@@ -54,10 +54,13 @@ def on_napalm():
 
     targets = request.get_json(force=False)
 
+    print 'napalm'
+
     for t in targets:
     
         t = models.retrieve_alert(t)
 
+        print 'napalming', json.dumps(t, sort_keys=True, indent=4)
         launch_napalm(t)
         print 'launching napalm'
 
@@ -68,10 +71,13 @@ def on_deauth():
 
     targets = request.get_json(force=False)
 
+    print 'deauth'
+
     for t in targets:
     
         t = models.retrieve_alert(t)
 
+        print 'deauthing', json.dumps(t, sort_keys=True, indent=4)
         launch_deauth(t)
         print 'launching deauth'
 
@@ -110,17 +116,24 @@ def dismiss_alerts(alerts):
 
 def add_alert(alert):
     
-    r = redis.Redis()
+    alert = models.store_alert(alert)
 
-    r.set('%s:%s' % (alert['id'], alert['location']), alert['location'])
-    #r.expire(alert['id'], 30)
-    r.expire('%s:%s' % (alert['id'], alert['location']), 30)
-    #r.expire(alert['id'], 5)
+    print json.dumps(alert, sort_keys=True, indent=4)
 
-    # store alert in time based cache
-    if models.store_alert(alert):
+    emit('add alert', alert, namespace=socketio_ns, broadcast=True)
 
-        emit('add alert', alert, namespace=socketio_ns, broadcast=True)
+    #r = redis.Redis()
+
+    #r.set('%s:%s' % (alert['id'], alert['location']), alert['location'])
+    ##r.expire(alert['id'], 30)
+    ##r.expire('%s:%s' % (alert['id'], alert['location']), 30)
+    #r.expire('%s:%s' % (alert['id'], alert['location']), 18)
+    ##r.expire(alert['id'], 5)
+
+    ## store alert in time based cache
+    #if models.store_alert(alert):
+
+    #    emit('add alert', alert, namespace=socketio_ns, broadcast=True)
 
 def launch_napalm(alerts):
 
@@ -164,8 +177,6 @@ def prev():
 @smashd.route('/map')
 def area_map():
 
-    launch_napalm({})
-
     return render_template('map.html')
 
 @smashd.route('/settings')
@@ -197,15 +208,9 @@ def redis_monitor():
         
             alert = [{ 'id' : msg[0], 'location' : msg[1] }]
     
-            response = requests.post('http://172.16.15.130:80/alert/dismiss', json=alert)
+            response = requests.post('http://0.0.0.0:80/alert/dismiss', json=alert)
 
             print 'Sent to self:', response
     
 rmon = Process(target=redis_monitor, args=())
 rmon.start()
-
-
-    
-    
-
-    

@@ -143,33 +143,33 @@ def detect_evil_twins():
                 if bssid not in whitelist[ssid]:
                     print '[Evil Twin Sentry] %s has ssid: %s but not in whitelist' % (bssid, ssid)
                     shitlist.put(response)
-                else:
+    #            else:
 
-                    baseline_tx = numpy.mean(recent_tx_values)
-                    
-                    range_a = baseline_tx - THRESHOLD
-                    range_b = baseline_tx + THRESHOLD
+                    #baseline_tx = numpy.mean(recent_tx_values)
+                    #
+                    #range_a = baseline_tx - THRESHOLD
+                    #range_b = baseline_tx + THRESHOLD
 
-                    if range_a > range_b:
+                    #if range_a > range_b:
 
-                        high_lim = range_a
-                        low_lim = range_b
+                    #    high_lim = range_a
+                    #    low_lim = range_b
             
-                    else:
+                    #else:
 
-                        high_lim = range_b
-                        low_lim = range_a
+                    #    high_lim = range_b
+                    #    low_lim = range_a
 
-                    tx = response['tx']
+                    #tx = response['tx']
 
-                    if tx > high_lim or tx < low_lim:
+                    #if tx > high_lim or tx < low_lim:
 
-                        print '[Evil Twin Sentry] Illegal tx varation: %s ' % bssid
-                        shitlist.put(bssid)
+                    #    print '[Evil Twin Sentry] Illegal tx varation: %s ' % bssid
+                    #    shitlist.put(bssid)
 
-                    else:
+                    #else:
 
-                        baseline_tx.appendleft(tx)
+                    #    baseline_tx.appendleft(tx)
 
     except KeyboardInterrupt:
         pass
@@ -196,6 +196,7 @@ def detect_karma_attacks():
             
                 # call progress bar here based on scapy.sniff's timeout
                 probe_responses = sniffer.send_probe_requests(interface=interface, ssid=next_essid)
+
 
                 for response in get_responding_aps(probe_responses):
 
@@ -236,6 +237,11 @@ def set_configs():
                     dest='evil_twin',
                     action='store_true',
                     help='detect evil twin attacks')
+
+    parser.add_argument('--karma',
+                    dest='karma',
+                    action='store_true',
+                    help='detect karma attacks')
 
     parser.add_argument('--enable-alerts',
                     dest='enable_alerts',
@@ -282,6 +288,7 @@ if __name__ == '__main__':
 
         daemons.append(Process(target=mitigator,
                 args=(configs['enable_alerts'], configs['enable_deauth'],)))
+
 
         for d in daemons:
 

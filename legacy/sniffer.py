@@ -2,7 +2,7 @@ import logging
 import time
 
 # set scapy loglevel to ERROR before importing scapy
-logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
+#logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all  import *
 
 from multiprocessing import Process, Queue
@@ -19,8 +19,9 @@ def is_valid_probe_data(packet):
     if packet.subtype != PROBE_RESPONSE:
         return False
 
-    if packet.addr1 != '00:11:22:33:44:55':
-        return False
+
+#    if packet.addr1 != '00:11:22:33:44:55':
+#        return False
 
     return True
 
@@ -37,6 +38,7 @@ def is_valid_probe_response(packet):
 
 def extract_probe_data(packet):
 
+    print 'extracting probe data'
     return { 
     
         'addr2' : packet.addr2,
@@ -52,21 +54,27 @@ def extract_probe_data(packet):
 
 def sniffer(interface, shared_memory):
 
-    pkt = sniff(lfilter=is_valid_probe_data, iface=interface, store=1, timeout=10)
+    pkt = sniff(lfilter=is_valid_probe_data, iface=interface, store=1, timeout=20)
 
     results = [ extract_probe_data(p) for p in pkt ]
+    print results
 
     shared_memory.put(results)
 
 def response_sniffer(interface):
 
     while True:
-        pkt = sniff(lfilter=is_valid_probe_response, iface=interface, count=1, store=1, timeout=10)
+
+        print 'listening for probe response'
+        pkt = sniff(lfilter=is_valid_probe_response, iface=interface, count=1, store=1, timeout=20)
+
+	print pkt
 
         if len(pkt) > 0:
             try:
                 yield extract_probe_data(pkt[0])
             except IndexError:
+                print 'index error'
                 continue
 
         
@@ -82,7 +90,7 @@ def ProbeReq(count=BURST_COUNT,ssid='',dst='ff:ff:ff:ff:ff:ff', interface=None):
         /param/essid/rates/dsset
 
     print '[*] 802.11 Probe Request: SSID=[%s], count=%d' % (ssid,count)
-    sendp(pkt,iface=interface,count=count,inter=0.1,verbose=0)
+    sendp(pkt,iface=interface,count=count,inter=0.1,verbose=1)
 
 def send_probe_requests(interface=None, ssid=None):
 
@@ -97,8 +105,10 @@ def send_probe_requests(interface=None, ssid=None):
     # probe responses
     time.sleep(3)
 
+
     # send out probe requests... sniffer will catch any responses
-    ProbeReq(ssid=ssid, interface=interface)
+    ProbeReq(ssid=ssid, interface='wlp3s0')
+    print 'sending probe requests'
 
     # make sure to get results from shared memory before allowing 
     # sniffer to join with parent process 
@@ -112,10 +122,12 @@ def send_probe_requests(interface=None, ssid=None):
 
 def sniff_probe_responses(interface=None):
 
+    print 'sniffing responses'
     # initialize shared memory
     results = Queue()
 
-    p = Process(target=response_sniffer, args=(interface, results,))
+    #p = Process(target=response_sniffer, args=(interface, results,))
+    p = Process(target=response_sniffer, args=('wlp3s0', results,))
     p.start()
 
     # make sure to get results from shared memory before allowing 

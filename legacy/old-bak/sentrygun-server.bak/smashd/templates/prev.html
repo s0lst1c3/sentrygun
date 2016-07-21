@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang='en-US'>
+
+  {% set current_view = 'Dashboard' %}
+
+  <head>
+  {% include 'head.html' %}
+  </head>
+
+  <body>
+
+    <div data-role="page" id="mainpage">
+
+      {% include 'header.html' %}
+
+      <div data-role="main" class="ui-content">
+
+      
+
+        <div data-role="collapsible">
+          <h3>HARBINGER</h3>
+          <p>Collapsible content here</p>
+        </div>
+        <div data-role="collapsible">
+          <h3>VICARIOUS</h3>
+          <p>Collapsible content here</p>
+        </div>
+        <div data-role="collapsible">
+          <h3>CYNIC</h3>
+          <p>
+
+            <div id="alertsdiv" class="tablewrap">
+		      <div class='overflower'>
+
+                <form>
+	              <span class="tablespan">
+
+                    <table id="alertlist" data-role="table" class="sel-table ui-responsive ui-shadow" data-filter="false" data-input="#alertFilter">
+
+                      <thead>
+                        <th>Type</th><th>BSSID</th><th>ESSID</th><th>Channel</th><th>Details</th><th>Time</th>
+                      </thead>
+
+
+                      <tbody id="alertbody">
+
+                        <tr>
+                          <td>Karma</td>
+                          <td>00:11:22:33:22:11</td>
+                          <td>asdfl987asdf</td>
+                          <td>6</td>
+                          <td>Uh oh!</td>
+                          <td>09/09/09 00:11pm</td>
+                        </tr>
+
+                        <tr>
+                          <td>Unauthorized AP</td>
+                          <td>00:11:22:FF:22:FF</td>
+                          <td>Free WiFi</td>
+                          <td>6</td>
+                          <td>Totally legit</td>
+                          <td>09/09/09 00:11pm</td>
+                        </tr>
+
+                        <tr>
+                          <td>Evil Twin</td>
+                          <td>00:11:22:FF:AA:FF</td>
+                          <td>BSidesLV</td>
+                          <td>1</td>
+                          <td>Totally legit</td>
+                          <td>09/09/09 00:11pm</td>
+                        </tr>
+
+                      </tbody>
+
+
+                    </table>
+
+                  </span>
+
+				  <fieldset data-role="controlgroup" data-type="horizontal" >
+                    <input type="radio" name="radio-choice-2" id="radio-choice-21" value="choice-1" checked="checked" />
+                    <label for="radio-choice-21">Locate</label>
+                    
+                    <input type="radio" name="radio-choice-2" id="radio-choice-22" value="choice-2"  />
+                    <label for="radio-choice-22">Deauth</label>
+                    
+                    <input type="radio" name="radio-choice-2" id="radio-choice-23" value="choice-3"  />
+                    <label for="radio-choice-23">Napalm</label>
+	
+                    <input style='margin-left: 1cm' type="submit" value="Submit">
+				  </fieldset>
+
+				  
+                </form>
+
+              </div>
+            </div>
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+
+	<script src='/static/js/smashd/alerts.js'></script>
+
+  </body>
+
+</html>
