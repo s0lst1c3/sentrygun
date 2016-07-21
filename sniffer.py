@@ -44,7 +44,7 @@ def extract_probe_data(packet):
         'addr3' : packet.addr3,
         'essid' : packet[Dot11Elt].info,
 	'channel' : int(ord(packet[Dot11Elt:3].info)),
-        'tx' : -(256-ord(packet.notdecoded[-4:-3])),
+        'tx' : -(256-ord(packet.notdecoded[-6:-5])),
         'len' : packet.len,
         'timestamp' : time.time(),
     }
