@@ -1,4 +1,0 @@
-#fedora
-gcc
-redhat-rpm-config
-python-devel
