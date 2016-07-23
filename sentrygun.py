@@ -41,7 +41,7 @@ def alert_factory(location=None,
             ])
 
     # return dict from arguments
-    _id = str(mmh3.hash(''.join([ essid, bssid, str(channel), intent])))
+    _id = str(mmh3.hash(''.join([ bssid, str(channel), intent])))
 
     return {
         
@@ -133,31 +133,6 @@ class PunisherNamespace(BaseNamespace):
         else:
 
             print 'Initiating deauth attack against', json.dumps(alert, indent=4, sort_keys=True)
-
-#def deauth_scheduler():
-#
-#    try:
-#
-#
-#        deauthed_bssids = set([])
-#        deauth_treatments = {}
-#        while True:
-#
-#            alert = deauth_list.get()
-#            bssid = alert['bssid']
-#
-#            if bssid in deauthed_bssids:
-#                continue
-#
-#            print '[deauth_scheduler] Received new target:', bssid
-#
-#            deauthed_bssids.add(bssid)
-#            deauth_treatments[bssid] = Process(target=deauth, args=(bssid,))
-#            deauth_treatments[bssid].daemon = True
-#            deauth_treatments[bssid].start()
-#
-#    except KeyboardInterrupt:
-#        pass
 
 def deauth_scheduler():
 
@@ -251,9 +226,9 @@ def listener(configs):
 
             alert = shitlist.get()
 
-            print 'sending alert'
-
+            print '[alert] sending...'
             response = requests.post(server_uri, json=alert)
+            print '[alert] response:', response
 
     except KeyboardInterrupt:
         pass
@@ -269,46 +244,45 @@ def get_responding_aps(probe_responses):
             unique_stations.add(station)
             yield response
 
-def detect_evil_twins():
+def detect_rogue_ap_attacks():
 
     import sniffer
 
-    print 'test'
+    responding_aps = {}
     try:
-        whitelist = {}
-        with open('whitelist.txt') as fd:
+        if configs['evil_twin']:
+        	whitelist = {}
+        	with open('whitelist.txt') as fd:
 
-            for line in fd:
+        	    for line in fd:
 
-                line = line.split()
-                ssid = line[0]
-                bssid = line[1]
+        	        line = line.split()
+        	        ssid = line[0]
+        	        bssid = line[1]
 
-                if ssid in whitelist:
-                    whitelist[ssid].add(bssid)
-                else:
-                    whitelist[ssid] = set()
-                    whitelist[ssid].add(bssid)
-
-        print 'test 2'
+        	        if ssid in whitelist:
+        	            whitelist[ssid].add(bssid)
+        	        else:
+        	            whitelist[ssid] = set()
+        	            whitelist[ssid].add(bssid)
 
         probe_responses = sniffer.response_sniffer(interface)
-
         recent_tx_values = deque([], 10)
 
         for response in probe_responses:
         
             ssid = response['essid']
             bssid = response['addr3']
-            #print ssid, bssid, response['tx']
+            channel = response['channel']
+            print ssid, bssid, response['tx'], channel
             if 'Bat' in ssid:
                 print ssid
             
 
-            if ssid in whitelist:
+            if configs['evil_twin'] and ssid in whitelist:
 
                 if bssid not in whitelist[ssid]:
-                    print '[Evil Twin Sentry] %s has ssid: %s but not in whitelist' % (bssid, ssid)
+                    print '[Sentry] %s has ssid: %s but not in whitelist' % (bssid, ssid)
 
                     alert = alert_factory(location=DEVICE_NAME,
                                         bssid=bssid,
@@ -319,6 +293,8 @@ def detect_evil_twins():
                     shitlist.put(alert)
 
                 else:
+
+          
 
                     pass
                     #baseline_tx = numpy.mean(recent_tx_values)
@@ -352,65 +328,48 @@ def detect_evil_twins():
 
                     #    baseline_tx.appendleft(tx)
 
-    except KeyboardInterrupt:
-        pass
+            elif configs['karma']:
 
+                if bssid in responding_aps:
+                     
+                    responding_aps[bssid].add(ssid)
 
-def detect_karma_attacks():
+                else:
+                
+                    responding_aps[bssid] = set([])
+                    responding_aps[bssid].add(ssid)
+                if len(responding_aps[bssid]) > 1:
 
-    import sniffer
+                    print '[Sentry]  Karma attack detected: %s has sent probe responses for %d SSIDs' % (bssid, len(responding_aps[bssid]))
 
-    try:
-        while True:
-
-            # use set for fast lookup times, dicts for storing counts and details
-            responding_aps = {
-                'members' :  set([]),
-                'counts' : {},
-                'details' : {},
-            }
-
-            for i in xrange(THRESHOLD):
-
-                next_essid = rand_essid()
-                print '[Karma Sentry] Sending Probe Request %d for: %s' % (i, next_essid)
-            
-                # call progress bar here based on scapy.sniff's timeout
-                probe_responses = sniffer.send_probe_requests(interface=interface, ssid=next_essid)
-
-                for response in get_responding_aps(probe_responses):
-
-                    bssid = response['addr3']
-
-                    if bssid not in responding_aps['members']:
-                        responding_aps['members'].add(bssid)
-                        responding_aps['counts'][bssid] = 1
-                        responding_aps['details'][bssid] = response
-                    else:
-                        responding_aps['counts'][bssid] += 1
-
-
-            for bssid in responding_aps['members']:
-
-                if responding_aps['counts'][bssid] >= THRESHOLD:
-
-                    print '[Karma Sentry] Karma attack detected from %s' % bssid
-                    print '[Karma Sentry] Adding %s to list of offending APs' % bssid
-    
-                    details = responding_aps['details'][bssid]
-                    
                     alert = alert_factory(location=DEVICE_NAME,
                                         bssid=bssid,
-                                        channel=details['channel'],
-					tx=details['tx'],
+                                        channel=response['channel'],
                                         intent='karma',
-                                        essid=details['essid'])
+					tx=response['tx'],
+                                        essid=ssid)
                     shitlist.put(alert)
-
-            time.sleep(3)
 
     except KeyboardInterrupt:
         pass
+
+def channel_hopper():
+
+    import sniffer
+    while True:
+
+        # channel hop from main process
+        for channel in xrange(1, 14):
+
+            if configs['karma']:
+
+            	for i in xrange(THRESHOLD):
+            	    next_essid = rand_essid()
+            	    sniffer.send_probe_requests(interface=interface, ssid=next_essid)
+
+            print '[channel hopper] Switching to channel', channel
+            os.system('iwconfig %s channel %d' % (configs['iface'], channel))
+            time.sleep(6)
 
 def set_configs():
 
@@ -455,16 +414,6 @@ def set_configs():
 
     return parser.parse_args().__dict__
 
-def channel_hopper():
-
-    while True:
-
-        # channel hop from main process
-        for channel in xrange(1, 14):
-
-            print '[channel hopper] Switching to channel', channel
-            os.system('iwconfig %s channel %d' % (configs['iface'], channel))
-            time.sleep(.5)
 
 
 if __name__ == '__main__':
@@ -491,10 +440,7 @@ if __name__ == '__main__':
     daemons = []
     try:
     
-        if configs['karma']:
-            daemons.append(Process(target=detect_karma_attacks, args=()))
-        if configs['evil_twin']:
-            daemons.append(Process(target=detect_evil_twins, args=()))
+        daemons.append(Process(target=detect_rogue_ap_attacks, args=()))
 
         if configs['canary']:
             canary_configs = configs['canary'].split(':')

@@ -5,24 +5,10 @@ import time
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all  import *
 
-from multiprocessing import Process, Queue
 from configs import BURST_COUNT
 
 PROBE_REQUEST  = 0x4
 PROBE_RESPONSE = 0x5
-
-def is_valid_probe_data(packet):
-
-    if not packet.haslayer(Dot11):
-        return False
-
-    if packet.subtype != PROBE_RESPONSE:
-        return False
-
-    if packet.addr1 != '00:11:22:33:44:55':
-        return False
-
-    return True
 
 def is_valid_probe_response(packet):
 
@@ -49,16 +35,6 @@ def extract_probe_data(packet):
         'timestamp' : time.time(),
     }
 
-    
-
-def sniffer(interface, shared_memory):
-
-    pkt = sniff(lfilter=is_valid_probe_data, iface=interface, store=1, timeout=20)
-
-    results = [ extract_probe_data(p) for p in pkt ]
-
-    shared_memory.put(results)
-
 def response_sniffer(interface):
 
     while True:
@@ -83,49 +59,10 @@ def ProbeReq(count=BURST_COUNT,ssid='',dst='ff:ff:ff:ff:ff:ff', interface=None):
         /param/essid/rates/dsset
 
     print '[*] 802.11 Probe Request: SSID=[%s], count=%d' % (ssid,count)
-    sendp(pkt,iface=interface,count=count,inter=0.1,verbose=1)
+    sendp(pkt,iface='wlan0',count=count,inter=0.1,verbose=0)
 
 def send_probe_requests(interface=None, ssid=None):
 
-    # initialize shared memory
-    results = Queue()
-
-    # start sniffer before sending out probe requests
-    p = Process(target=sniffer, args=(interface, results,))
-    p.start()
-
-    # give sniffer a chance to initialize so that we don't miss
-    # probe responses
-    time.sleep(3)
-
     # send out probe requests... sniffer will catch any responses
-    ProbeReq(ssid=ssid, interface=interface)
-
-    # make sure to get results from shared memory before allowing 
-    # sniffer to join with parent process 
-    probe_responses = results.get()
-
-    # join sniffer with its parent process
-    p.join()
-
-    # return results
-    return probe_responses
-
-def sniff_probe_responses(interface=None):
-
-    # initialize shared memory
-    results = Queue()
-
-    p = Process(target=response_sniffer, args=(interface, results,))
-    p.start()
-
-    # make sure to get results from shared memory before allowing 
-    # sniffer to join with parent process 
-    probe_responses = results.get()
-
-    # join sniffer with its parent process
-    p.join()
-
-    # return results
-    return probe_responses
+    ProbeReq(ssid=ssid, interface='wlan1')
 
