@@ -84,7 +84,7 @@ def deauth(bssid, client='ff:ff:ff:ff:ff:ff'):
 
 
     while True:
-        print '[Debug] Running deauth attack against', bssid
+        print '[deauth worker] running deauth attack against', bssid
         time.sleep(1)
 
     #pckt = Dot11(addr1=client, addr2=bssid, addr3=bssid) / Dot11Deauth()
@@ -99,7 +99,7 @@ def napalm(bssid, client='ff:ff:ff:ff:ff:ff'):
 
 
     while True:
-        print '[Debug] Running napalm attack against', bssid
+        print '[deauth] running napalm attack against', bssid
         time.sleep(1)
 
     # code to connect 100k clients goes here
@@ -114,11 +114,11 @@ class PunisherNamespace(BaseNamespace):
 
         if 'dismiss' in alert:
 
-            print 'Ceasing any existing napalm attacks against', json.dumps(alert, indent=4, sort_keys=True)
+            print '[punisher] ceasing any existing napalm attacks against', json.dumps(alert, indent=4, sort_keys=True)
     
         else:
 
-            print 'Initiating napalm attack against', json.dumps(alert, indent=4, sort_keys=True)
+            print '[punisher] initiating napalm attack against', json.dumps(alert, indent=4, sort_keys=True)
 
     def on_deauth_target(self, *args):
 
@@ -128,11 +128,11 @@ class PunisherNamespace(BaseNamespace):
 
         if 'dismiss' in alert:
 
-            print 'Ceasing any existing deauth attack against', json.dumps(alert, indent=4, sort_keys=True)
+            print '[punisher] ceasing any existing deauth attack against', json.dumps(alert, indent=4, sort_keys=True)
     
         else:
 
-            print 'Initiating deauth attack against', json.dumps(alert, indent=4, sort_keys=True)
+            print '[punisher] initiating deauth attack against', json.dumps(alert, indent=4, sort_keys=True)
 
 def deauth_scheduler():
 
@@ -144,7 +144,6 @@ def deauth_scheduler():
 
             alert = deauth_list.get()
             _id = alert['id']
-            print 'alert is', alert
 
             if 'dismiss' in alert:
 
@@ -159,7 +158,7 @@ def deauth_scheduler():
             else:
                 bssid = alert['bssid']
 
-                print '[deauth_scheduler] Received new target:', bssid
+                print '[deauth_scheduler] received new target:', bssid
 
                 deauth_treatments[_id] = Process(target=deauth, args=(bssid,))
                 deauth_treatments[_id].daemon = True
@@ -178,7 +177,6 @@ def napalm_scheduler():
 
             alert = napalm_list.get()
             _id = alert['id']
-            print 'alert is', alert
 
             if 'dismiss' in alert:
 
@@ -193,7 +191,7 @@ def napalm_scheduler():
             else:
                 bssid = alert['bssid']
 
-                print '[napalm_scheduler] Received new target:', bssid
+                print '[napalm_scheduler] received new target:', bssid
 
                 napalm_treatments[_id] = Process(target=napalm, args=(bssid,))
                 napalm_treatments[_id].daemon = True
@@ -226,9 +224,10 @@ def listener(configs):
 
             alert = shitlist.get()
 
-            print '[alert] sending...'
+            print '[alert] %s attack: notifying server at %s' %\
+                                       (alert['intent'], server_uri)
             response = requests.post(server_uri, json=alert)
-            print '[alert] response:', response
+            print '[alert] server at %s acknowledged notification with status code %d' % (server_uri, response.status_code)
 
     except KeyboardInterrupt:
         pass
@@ -274,15 +273,12 @@ def detect_rogue_ap_attacks():
             ssid = response['essid']
             bssid = response['addr3']
             channel = response['channel']
-            print ssid, bssid, response['tx'], channel
-            if 'Bat' in ssid:
-                print ssid
-            
+            print '[probe Response]', ssid, bssid, response['tx'], channel
 
             if configs['evil_twin'] and ssid in whitelist:
 
                 if bssid not in whitelist[ssid]:
-                    print '[Sentry] %s has ssid: %s but not in whitelist' % (bssid, ssid)
+                    print '[anomaly] %s has ssid: %s but not in whitelist' % (bssid, ssid)
 
                     alert = alert_factory(location=DEVICE_NAME,
                                         bssid=bssid,
@@ -340,7 +336,7 @@ def detect_rogue_ap_attacks():
                     responding_aps[bssid].add(ssid)
                 if len(responding_aps[bssid]) > 1:
 
-                    print '[Sentry]  Karma attack detected: %s has sent probe responses for %d SSIDs' % (bssid, len(responding_aps[bssid]))
+                    print '[anomaly] %s has sent probe responses for %d SSIDs' % (bssid, len(responding_aps[bssid]))
 
                     alert = alert_factory(location=DEVICE_NAME,
                                         bssid=bssid,

@@ -46,8 +46,6 @@ def response_sniffer(interface):
             except IndexError:
                 continue
 
-        
-
 def ProbeReq(count=BURST_COUNT,ssid='',dst='ff:ff:ff:ff:ff:ff', interface=None):
 
     param = Dot11ProbeReq()
@@ -58,11 +56,10 @@ def ProbeReq(count=BURST_COUNT,ssid='',dst='ff:ff:ff:ff:ff:ff', interface=None):
         /Dot11(type=0,subtype=4,addr1=dst,addr2='00:11:22:33:44:55',addr3='00:11:22:33:44:00')\
         /param/essid/rates/dsset
 
-    print '[*] 802.11 Probe Request: SSID=[%s], count=%d' % (ssid,count)
-    sendp(pkt,iface='wlan0',count=count,inter=0.1,verbose=0)
+    print '[karma honeypot] sending 802.11 probe request: SSID=[%s], count=%d' % (ssid,count)
+    sendp(pkt,iface=interface,count=count,inter=0.1,verbose=0)
 
 def send_probe_requests(interface=None, ssid=None):
 
-    # send out probe requests... sniffer will catch any responses
-    ProbeReq(ssid=ssid, interface='wlan1')
+    ProbeReq(ssid=ssid, interface=interface)
 
