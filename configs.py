@@ -1,4 +1,8 @@
-DEVICE_NAME = 'Main Office'
+DEVICE_NAME = 'Conference Room'
+
+N_TIMES_MAX_DEV = 2
+
+CALIBRATION_TX_COUNT = 15
 
 ESSID_LEN  = 24
 SERVER_ENDPOINT = 'alert/add'

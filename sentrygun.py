@@ -11,6 +11,8 @@ import time
 import json
 import mmh3
 import os
+import sys
+import cPickle
 
 from multiprocessing import Queue, Process
 from collections import deque
@@ -49,7 +51,7 @@ def alert_factory(location=None,
         'location' : location,
         'bssid' : bssid,
         'channel' : channel,
-	'tx' : tx,
+        'tx' : tx,
         'essid' : essid,
         'intent' : intent,
         'timestamp' : time.time(),
@@ -137,7 +139,6 @@ class PunisherNamespace(BaseNamespace):
 def deauth_scheduler():
 
     try:
-
 
         deauth_treatments = {}
         while True:
@@ -232,97 +233,57 @@ def listener(configs):
     except KeyboardInterrupt:
         pass
 
-
-def get_responding_aps(probe_responses):
-
-    unique_stations = set([])
-    for response in probe_responses:
-        
-        station = response['addr3']
-        if station not in unique_stations:
-            unique_stations.add(station)
-            yield response
-
 def detect_rogue_ap_attacks():
 
     import sniffer
 
     responding_aps = {}
     try:
-        if configs['evil_twin']:
-        	whitelist = {}
-        	with open('whitelist.txt') as fd:
-
-        	    for line in fd:
-
-        	        line = line.split()
-        	        ssid = line[0]
-        	        bssid = line[1]
-
-        	        if ssid in whitelist:
-        	            whitelist[ssid].add(bssid)
-        	        else:
-        	            whitelist[ssid] = set()
-        	            whitelist[ssid].add(bssid)
 
         probe_responses = sniffer.response_sniffer(interface)
-        recent_tx_values = deque([], 10)
 
         for response in probe_responses:
         
             ssid = response['essid']
-            bssid = response['addr3']
+            bssid = response['addr3'].lower()
             channel = response['channel']
+            tx = response['tx']
+
             print '[probe Response]', ssid, bssid, response['tx'], channel
 
             if configs['evil_twin'] and ssid in whitelist:
 
                 if bssid not in whitelist[ssid]:
+
                     print '[anomaly] %s has ssid: %s but not in whitelist' % (bssid, ssid)
 
                     alert = alert_factory(location=DEVICE_NAME,
                                         bssid=bssid,
                                         channel=response['channel'],
                                         intent='evil twin - whitelist',
-					tx=response['tx'],
+                                        tx=response['tx'],
                                         essid=ssid)
                     shitlist.put(alert)
 
                 else:
 
-          
+                    bssid = '40:16:7e:ea:73:f8'
+                    ap = calibration_table['ssids'][ssid]['bssids'][bssid]
 
-                    pass
-                    #baseline_tx = numpy.mean(recent_tx_values)
-                    #
-                    #range_a = baseline_tx - THRESHOLD
-                    #range_b = baseline_tx + THRESHOLD
+                    upper_bound = ap['upper_bound']
+                    lower_bound = ap['lower_bound']
 
-                    #if range_a > range_b:
+                    if tx > upper_bound or tx < lower_bound:
 
-                    #    high_lim = range_a
-                    #    low_lim = range_b
-            
-                    #else:
+                        print '[anomaly] Illegal tx varation: %s ' % bssid
+                        alert = alert_factory(location=DEVICE_NAME,
+                                            bssid=bssid,
+                                            channel=response['channel'],
+                                            intent='evil twin - tx',
+                                            tx=response['tx'],
+                                            essid=ssid)
 
-                    #    high_lim = range_b
-                    #    low_lim = range_a
-
-                    #tx = response['tx']
-
-                    #if tx > high_lim or tx < low_lim:
-
-                    #    print '[Evil Twin Sentry] Illegal tx varation: %s ' % bssid
-                    #    alert = alert_factory(location=DEVICE_NAME,
-                    #                        bssid=bssid,
-                    #                        channel=channel,
-                    #                        intent='evil twin - tx',
-                    #                        essid=ssid)
-                    #    shitlist.put(alert)
-
-                    #else:
-
-                    #    baseline_tx.appendleft(tx)
+                        shitlist.put(alert)
 
             elif configs['karma']:
 
@@ -334,6 +295,7 @@ def detect_rogue_ap_attacks():
                 
                     responding_aps[bssid] = set([])
                     responding_aps[bssid].add(ssid)
+
                 if len(responding_aps[bssid]) > 1:
 
                     print '[anomaly] %s has sent probe responses for %d SSIDs' % (bssid, len(responding_aps[bssid]))
@@ -342,7 +304,7 @@ def detect_rogue_ap_attacks():
                                         bssid=bssid,
                                         channel=response['channel'],
                                         intent='karma',
-					tx=response['tx'],
+                                        tx=response['tx'],
                                         essid=ssid)
                     shitlist.put(alert)
 
@@ -359,9 +321,9 @@ def channel_hopper():
 
             if configs['karma']:
 
-            	for i in xrange(THRESHOLD):
-            	    next_essid = rand_essid()
-            	    sniffer.send_probe_requests(interface=interface, ssid=next_essid)
+                for i in xrange(THRESHOLD):
+                    next_essid = rand_essid()
+                    sniffer.send_probe_requests(interface=interface, ssid=next_essid)
 
             print '[channel hopper] Switching to channel', channel
             os.system('iwconfig %s channel %d' % (configs['iface'], channel))
@@ -432,6 +394,33 @@ if __name__ == '__main__':
 
     configs = set_configs()
     interface = configs['iface']
+
+    if configs['evil_twin']:
+
+        try:
+
+            with open(r'calibration_table.pickle', 'rb') as fd:
+            
+                calibration_table = cPickle.load(fd)
+
+        except IOError:
+
+            print '[error] calibration_table.pickle not found'
+            print '[error] please run sg-calibrator.py before running sentrygun with --evil-twin flag'
+            sys.exit()
+
+        try:
+
+            with open(r'whitelist.pickle', 'rb') as fd:
+            
+                whitelist = cPickle.load(fd)
+
+        except IOError:
+
+            print '[error] whitelist.pickle not found'
+            print '[error] please run sg-calibrator.py before running sentrygun with --evil-twin flag'
+            sys.exit()
+
 
     daemons = []
     try:
