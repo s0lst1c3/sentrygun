@@ -72,7 +72,7 @@ Then install the python dependencies enumerated in the pip.req file included wit
 
 sentrygun sensors should be arranged in a grid across the area that they are responsible for protecting. For example, to add rogue AP protection to a large conference room:
 
-	<diagram here>
+![alt tag](https://raw.githubusercontent.com/s0lst1c3/sentrygun/docs/docs/img/sentrygun-grid.png)
 
 The sensors should be connected to the machine running sentrygun-server over a phsyical network connection. Preferably, this connection should occur over an ethernet connection only accessible to network administrators (i.e. management network).
 
@@ -139,15 +139,15 @@ Once the system is up and running, navigate to the address and port at which the
 
 You should be presented with a blank screen labeled "SentryGun Dashboard". There will also be an expandable toolbar on the left with links to features that have not been implemented yet.
 
-![alt tag](https://raw.githubusercontent.com/s0lst1c3/sentrygun/docs/docs/screenshots/sentrygun-blank.png)
+![alt tag](https://raw.githubusercontent.com/s0lst1c3/sentrygun/docs/docs/img/sentrygun-blank.png)
 
 When a rogue access point attack is detected by one or more sentrygun sensor devices, an alert will appear instantly on the dashboard as shown below.
 
-![alt tag](https://raw.githubusercontent.com/s0lst1c3/sentrygun/docs/docs/screenshots/sentrygun-new.png)
+![alt tag](https://raw.githubusercontent.com/s0lst1c3/sentrygun/docs/docs/img/sentrygun-new.png)
 
 Each alert corresponds to an active Rogue AP attack against your network. Clicking an alert will reveal a list of all devices currently detecting the attack, as shown below.
 
-![alt tag](https://raw.githubusercontent.com/s0lst1c3/sentrygun/docs/docs/screenshots/sentrygun-alert.png)
+![alt tag](https://raw.githubusercontent.com/s0lst1c3/sentrygun/docs/docs/img/sentrygun-alert.png)
 
 The list of alerting devices is sorted by distance and signal strength. This allows you to begin locating the source of the attack, as the rogue AP is closest to the sensor displayed at the top of the list. 
 
