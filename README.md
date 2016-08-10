@@ -70,7 +70,7 @@ Then install the python dependencies enumerated in the pip.req file included wit
 
 ##Step 3 - network setup
 
-sentrygun sensors should be arranged in a grid across the area that they are responsible for protecting. For example, to add rogue AP protection to a large conference room:
+sentrygun sensors should be arranged in a grid across the area that they are responsible for protecting. For example, to add rogue AP protection to a warehouse:
 
 ![alt tag](https://raw.githubusercontent.com/s0lst1c3/sentrygun/docs/docs/img/sentrygun-grid.png)
 
