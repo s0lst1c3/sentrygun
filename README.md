@@ -137,11 +137,11 @@ Once the system is up and running, navigate to the address and port at which the
 
 You should be presented with a blank screen labeled "SentryGun Dashboard". There will also be an expandable toolbar on the left with links to features that have not been implemented yet.
 
-![alt tag](https://raw.githubusercontent.com/s0lst1c3/sentrygun/docs/docs/screenshots/sentrygun-alert.png)
+![alt tag](https://raw.githubusercontent.com/s0lst1c3/sentrygun/docs/docs/screenshots/sentrygun-blank.png)
 
 When a rogue access point attack is detected by one or more sentrygun sensor devices, an alert will appear instantly on the dashboard as shown below.
 
-![alt tag](https://raw.githubusercontent.com/s0lst1c3/sentrygun/docs/docs/screenshots/sentrygun-alert.png)
+![alt tag](https://raw.githubusercontent.com/s0lst1c3/sentrygun/docs/docs/screenshots/sentrygun-new.png)
 
 Each alert corresponds to an active Rogue AP attack against your network. Clicking an alert will reveal a list of all devices currently detecting the attack, as shown below.
 
