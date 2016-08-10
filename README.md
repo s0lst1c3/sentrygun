@@ -1,6 +1,6 @@
 # sentrygun
 
-This is the github repo for the sentrygun sensor component.
+This is the github repo for the sentrygun sensor component. For sentrygun-server, please see https://github.com/s0lst1c3/sentrygun-server
 
 Sentrygun is an open source toolkit for detecting and responding to evil twin and karma attacks. It is capable of identifying evil twin attacks using whitelisting and listening for anomalies in signal strength. It is capable of detecting karma attacks by deliberately sending out probe requests for randomized ESSIDs then comparing the responses.
 
@@ -28,7 +28,7 @@ Want to contribute to sentrygun? Make a pull request, or contact research@gdssec
 
 A sentrygun sensor can be built using any device that meets the following requirements:
 
- - can be provisioned with a modern 64 bit Linux operating system
+ - supports a modern 64 bit Linux operating system
  - has an ethernet adapter
  - can power an external wireless adapter such as the TP-Link TL-WN722N.
 
@@ -68,15 +68,15 @@ Then install the python dependencies enumerated in the pip.req file included wit
 
 ##Step 3 - network setup
 
-SentryGun sensors should be arranged in a grid across the area that they are responsible for protecting. For example, to add rogue AP protection to a large conference room:
+sentrygun sensors should be arranged in a grid across the area that they are responsible for protecting. For example, to add rogue AP protection to a large conference room:
 
 	<diagram here>
 
 The sensors should be connected to the machine running sentrygun-server over a phsyical network connection. Preferably, this connection should occur over an ethernet connection only accessible to network administrators (i.e. management network).
 
-##Step 4 - Calibrate SentryGun sensors
+##Step 4 - Calibrate sentrygun sensors
 
-SentryGun sensor devices must be calibrated against your wireless network if evil twin detection is to be enabled. To calibrate the clients, populate the whitelist.txt file on each of your sensor devices with the bssid and essid of each access point on your network. The access points should be listed in whitelist.txt using the following format.
+sentrygun sensor devices must be calibrated against your wireless network if evil twin detection is to be enabled. To calibrate the clients, populate the whitelist.txt file on each of your sensor devices with the bssid and essid of each access point on your network. The access points should be listed in whitelist.txt using the following format.
 
 	# essid bssid
 	gdslabs ff:ff:ff:aa:aa:aa
@@ -99,17 +99,17 @@ Once all devices have been calibrated, we can proceed to step 4 to initialize th
 
 ##Step 5 - Run System
 
-To run the SentryGun system, first start the SentryGun-Server instance by issuing the following command on the CnC machine:
+To run the sentrygun system, first start the sentrygun-server instance by issuing the following command on the CnC machine:
 
 	python run.py <options go here> 
 
-SentryGun-Server accepts the following command line arguments.
+sentrygun-server accepts the following command line arguments.
 
  - --port   - specifies the port on which sentrygun-server should listen (defaults to 80)
  - --host   - specifies the address at which sentrygun-server should listen (defaults to 0.0.0.0 if --tunnels flag is not used. Defaults to 127.0.0.1 if --tunnels flag is used).
  - --debug  - Run in debug mode (not recommended for production environments)
  - --expire - Sets the number of seconds that alerts should remain active before they are automatically dismissed. To disable alert expiration, set this to 0 (default).
- - --tunnels - Creates ssh tunnels from localhost:PORT on sentrygun-server to localhost:PORT on a list of sentrygun clients, where PORT is the port at which sentrygun-server listens on. When this flag is used, sentrygun-server will always listen on localhost regardless of whether the --host is used. Use this option when running sentrygun on a hostle network (you should assume that you are). SentryGun clients should be specified with the format user@host:port.
+ - --tunnels - Creates ssh tunnels from localhost:PORT on sentrygun-server to localhost:PORT on a list of sentrygun clients, where PORT is the port at which sentrygun-server listens on. When this flag is used, sentrygun-server will always listen on localhost regardless of whether the --host is used. Use this option when running sentrygun on a hostle network (you should assume that you are). sentrysun clients should be specified with the format user@host:port.
 
 Once the server is running, start up each of the sentrygun sensor instances using the following syntax:
 
