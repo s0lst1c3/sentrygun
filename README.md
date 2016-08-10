@@ -6,7 +6,7 @@ Sentrygun is an open source toolkit for detecting and responding to evil twin an
 
 A sentrygun installation consists of an array of sensors arranged in a grid that communicate with a command and control server. The sensor units analyze wireless traffic to detect nearby evil twin and karma attacks, and report results back to the server. When an evil twin or karma attack is detected, an alert is displayed in sentrygun's web frontend. Network administrators can then take steps to locate the attack, or use sentrygun to launch counterattacks against the offending rogue AP.
 
-Want to contribute to sentrygun? Make a pull request, or contact research@gdssecurity.com. 
+Want to contribute to sentrygun? Make a pull request, or contact labs@gdssecurity.com. 
 
 #Key Features
 
@@ -137,20 +137,21 @@ Once the system is up and running, navigate to the address and port at which the
 
 You should be presented with a blank screen labeled "SentryGun Dashboard". There will also be an expandable toolbar on the left with links to features that have not been implemented yet.
 
-	<screenshot of empty dashboard here>
+	![alt tag](https://raw.githubusercontent.com/s0lst1c3/sentrygun/docs/docs/screenshots/img.png)
 
 When a rogue access point attack is detected by one or more sentrygun sensor devices, an alert will appear instantly on the dashboard as shown below.
 
-	<screenshot of alert shown here>
+	![alt tag](https://raw.githubusercontent.com/s0lst1c3/sentrygun/docs/docs/screenshots/img.png)
 
 Each alert corresponds to an active Rogue AP attack against your network. Clicking an alert will reveal a list of all devices currently detecting the attack, as shown below.
 
-	<screenshot of alert shown here>
+	![alt tag](https://raw.githubusercontent.com/s0lst1c3/sentrygun/docs/docs/screenshots/img.png)
 
 The list of alerting devices is sorted by distance and signal strength. This allows you to begin locating the source of the attack, as the rogue AP is closest to the sensor displayed at the top of the list. 
 
 Located at the bottom of each alert list is a toolbar that can be used to dismiss alerts as well as launch counterattacks against the rogue access points. The available actions shown in the toolbar are as follows:
 
+ - Locate - Displays a heat map to help locate the source of the attack (not implemented yet)
  - Deauth - Causes all sensor devices to flood the offending rogue AP with deauth packets
  - Napalm - Physically degrade offending rogue AP using flooding attack (not implemented yet)
  - Dismiss - Manually dismiss the alert and cease all counterattacks against offending rogue AP.
