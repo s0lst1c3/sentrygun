@@ -24,6 +24,8 @@ Want to contribute to sentrygun? Make a pull request, or contact labs@gdssecurit
 
 #Full Setup
 
+These are the full installation instructions for a rogue AP detection system using sentrygun and sentrygun-server. For instructions on how to use sentrygun after completing steps 1 through 5, please see the "Usage" section below.
+
 ##Step 1 - sentrygun sensor setup
 
 A sentrygun sensor can be built using any device that meets the following requirements:
