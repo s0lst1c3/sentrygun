@@ -267,7 +267,6 @@ def detect_rogue_ap_attacks():
 
                 else:
 
-                    bssid = '40:16:7e:ea:73:f8'
                     ap = calibration_table['ssids'][ssid]['bssids'][bssid]
 
                     upper_bound = ap['upper_bound']
