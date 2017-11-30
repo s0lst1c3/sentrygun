@@ -8,7 +8,7 @@ A sentrygun installation consists of an array of sensors arranged in a grid that
 
 Want to contribute to sentrygun? Make a pull request, or contact labs@gdssecurity.com. 
 
-#Key Features
+# Key Features
 
  - Capable of detecting karma attacks based on probe request/response patterns
  - Capable of detecting evil twin attacks through the use of whitelist crossreferencing
@@ -16,17 +16,17 @@ Want to contribute to sentrygun? Make a pull request, or contact labs@gdssecurit
  - Assists network administrators in determining physical location of rogue AP attack
  - Capable of launching counterattacks against rogue access points
 
-#Upcoming Features
+# Upcoming Features
 
  - machine learning based approach to evil twin detection
  - identification of behaviors typically used by rogue APs to evade detection
  - identification of rogue APs through the use of WiFi canaries
 
-#Full Setup
+# Full Setup
 
 These are the full installation instructions for a rogue AP detection system using sentrygun and sentrygun-server. For instructions on how to use sentrygun after completing steps 1 through 5, please see the "Usage" section below.
 
-##Step 1 - sentrygun sensor setup
+## Step 1 - sentrygun sensor setup
 
 A sentrygun sensor can be built using any device that meets the following requirements:
 
@@ -52,7 +52,7 @@ To build a sentrygun sensor unit:
 
  4. connect external wireless adapter to the device
 
-##Step 2 - sentrygun-server setup
+## Step 2 - sentrygun-server setup
 
 The machine running sentrygun's server component can be anything from a laptop to a rackmount machine. Any machine can be used so long as it meets the following requirements:
 
@@ -68,7 +68,7 @@ Then install the python dependencies enumerated in the pip.req file included wit
 
 	pip install -r pip.req
 
-##Step 3 - network setup
+## Step 3 - network setup
 
 sentrygun sensors should be arranged in a grid across the area that they are responsible for protecting. For example, to add rogue AP protection to a warehouse:
 
@@ -76,7 +76,7 @@ sentrygun sensors should be arranged in a grid across the area that they are res
 
 The sensors should be connected to the machine running sentrygun-server over a phsyical network connection. Preferably, this connection should occur over an ethernet connection only accessible to network administrators (i.e. management network).
 
-##Step 4 - Calibrate sentrygun sensors
+## Step 4 - Calibrate sentrygun sensors
 
 sentrygun sensor devices must be calibrated against your wireless network if evil twin detection is to be enabled. To calibrate the clients, populate the whitelist.txt file on each of your sensor devices with the bssid and essid of each access point on your network. The access points should be listed in whitelist.txt using the following format.
 
@@ -99,7 +99,7 @@ It is imperative that sg-calibrator.py is run in a physically secure environment
 
 Once all devices have been calibrated, we can proceed to step 4 to initialize the system.
 
-##Step 5 - Run System
+## Step 5 - Run System
 
 To run the sentrygun system, first start the sentrygun-server instance by issuing the following command on the CnC machine:
 
@@ -131,7 +131,7 @@ For example, to enable evil-twin and karma detection with server located at exam
 
 In the above example, the wireless interface is named wlan1.
  
-#Usage Instructions
+# Usage Instructions
 
 Once the system is up and running, navigate to the address and port at which the sentrygun-server instance is running. For example, if we started sentrygun-server at 192.168.1.39:4444 in step 4 of the setup instructions, we would navigate to the following address in our browser:
 
